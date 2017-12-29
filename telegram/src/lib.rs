@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate toml;
 extern crate reqwest;
 extern crate uuid;
@@ -13,6 +14,7 @@ extern crate tiny_http;
 use std::io::prelude::*;
 use std::fs::File;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use uuid::Uuid;
 use tiny_http::{Server, Response};
@@ -35,24 +37,41 @@ impl Bot {
 
         let config = toml::from_str(&contents).expect("failed to parse config");
 
+        println!("Config: {:?}", &config);
+
         Bot { config: config }
     }
 
-    pub fn make_request<T: serde::ser::Serialize>(
+    pub fn make_request<T: serde::ser::Serialize + Debug>(
         &self,
         client: &mut reqwest::Client,
         method: &str,
-        params: &T,
+        params: Option<&T>,
     ) -> () {
-        client
-            .post(&format!(
-                "https://api.telegram.org/bot{}/{}",
-                &self.config.auth_token,
-                method
-            ))
-            .json(params)
-            .send()
-            .unwrap();
+        let addr = format!(
+            "https://api.telegram.org/bot{}/{}",
+            &self.config.auth_token,
+            method
+        );
+        let mut req;
+        match params {
+            Some(params) => {
+                req = client.post(&addr);
+                req.form(params);
+            }
+            None => {
+                req = client.get(&addr);
+            }
+        };
+        println!(">> sending to {:?}, {:?}\n", addr, req);
+        let mut resp = req.send().unwrap();
+        println!("<< resp: {:?}\n", resp);
+        match resp.text() {
+            Ok(body) => {
+                println!("Body: {:?}\n", body);
+            }
+            Err(_) => (),
+        };
     }
 
     pub fn run(self) {
@@ -64,21 +83,29 @@ impl Bot {
 
         // register the webhook
         {
-            let params = [("url", &self.config.webhook.external_address)];
-            self.make_request(&mut client, "setWebhook", &params);
+            self.make_request::<&()>(&mut client, "deleteWebhook", None);
+            self.make_request(
+                &mut client,
+                "setWebhook",
+                Some(&[("url", &self.config.webhook.external_address)]),
+            );
         }
 
         loop {
             // get updates
-            for request in webhook_server.incoming_requests() {
+            for mut request in webhook_server.incoming_requests() {
                 println!(
                     "received request! method: {:?}, url: {:?}, headers: {:?}",
                     request.method(),
                     request.url(),
                     request.headers()
                 );
-                let response = Response::from_string("hello world");
-                request.respond(response);
+                let update: types::Update = serde_json::from_reader(request.as_reader()).unwrap();
+
+                println!(">> Got Update: \n{:?}", update);
+
+                let response = Response::from_string("").with_status_code(200);
+                request.respond(response).unwrap();
             }
 
             // update world
@@ -86,6 +113,6 @@ impl Bot {
         }
 
         // unregister the webhook
-        self.make_request(&mut client, "deleteWebhook", &());
+        self.make_request::<&()>(&mut client, "deleteWebhook", None);
     }
 }

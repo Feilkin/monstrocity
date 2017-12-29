@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct User {
     id: i64,
+    #[serde(default)]
     is_bot: bool,
     first_name: String,
     last_name: Option<String>,
@@ -21,12 +22,14 @@ pub struct Chat {
     username: Option<String>,
     first_name: Option<String>,
     last_name: Option<String>,
+    #[serde(default)]
     all_members_are_administrators: bool,
     photo: Option<ChatPhoto>,
     description: Option<String>,
     invite_link: Option<String>,
     pinned_message: Option<String>,
     sticker_set_name: Option<String>,
+    #[serde(default)]
     can_set_sticker_set: bool,
 }
 
@@ -34,15 +37,15 @@ pub struct Chat {
 pub struct Message {
     message_id: i64,
     from: Option<User>,
-    date: DateTime<Utc>,
+    date: i64,
     chat: Chat,
     forward_from: Option<User>,
     forward_from_chat: Option<Chat>,
     forward_from_message_id: Option<Chat>,
     forward_signature: Option<String>,
-    forward_date: Option<DateTime<Utc>>,
+    forward_date: Option<i64>,
     reply_to_message: Option<Box<Message>>,
-    edit_date: Option<DateTime<Utc>>,
+    edit_date: Option<i64>,
     media_group_id: Option<String>,
     author_signature: Option<String>,
     text: Option<String>,
