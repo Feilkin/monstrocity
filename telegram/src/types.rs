@@ -53,9 +53,9 @@ pub struct Message {
     caption_entities: Option<Vec<MessageEntity>>,
     audio: Option<Audio>,
     document: Option<Document>,
-    //game: Option<Game>,
+    game: Option<Game>,
     photo: Option<Vec<PhotoSize>>,
-    //sticker: Option<Sticker>,
+    sticker: Option<Sticker>,
     video: Option<Video>,
     voice: Option<Voice>,
     video_note: Option<VideoNote>,
@@ -78,8 +78,8 @@ pub struct Message {
     migrate_to_chat_id: Option<i64>,
     migrate_from_chat_id: Option<i64>,
     pinned_message: Option<Box<Message>>,
-    //invoice: Option<Invoice>,
-    //successful_payment: Option<SuccessfulPayment>,
+    invoice: Option<Invoice>,
+    successful_payment: Option<SuccessfulPayment>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -113,43 +113,115 @@ pub struct Update {
 
 // TODO: Why do I do this to myself
 #[derive(Debug, Deserialize, Serialize)]
-pub struct MessageEntity {}
+pub struct MessageEntity {
+    #[serde(rename = "type")]
+    _type: String, // TODO: consider using an Enum here
+    offset: i64,
+    length: i64,
+    url: Option<String>,
+    user: Option<User>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct PhotoSize {}
+pub struct PhotoSize {
+    file_id: String,
+    width: i64,
+    height: i64,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Audio {}
+pub struct Audio {
+    file_id: String,
+    duration: i64,
+    performer: Option<String>,
+    title: Option<String>,
+    mime_type: Option<String>,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Document {}
+pub struct Document {
+    file_id: String,
+    thumb: Option<PhotoSize>,
+    file_name: Option<String>,
+    mime_type: Option<String>,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Video {}
+pub struct Video {
+    file_id: String,
+    width: i64,
+    height: i64,
+    duration: i64,
+    thumb: Option<PhotoSize>,
+    mime_type: Option<String>,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Voice {}
+pub struct Voice {
+    file_id: String,
+    duration: i64,
+    mime_type: Option<String>,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct VideoNote {}
+pub struct VideoNote {
+    file_id: String,
+    length: i64,
+    duration: i64,
+    thumb: Option<PhotoSize>,
+    file_size: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Contact {}
+pub struct Contact {
+    phone_number: String,
+    first_name: String,
+    last_name: String,
+    user_id: i64,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Location {}
+pub struct Location {
+    longitude: f64,
+    latitude: f64,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Venue {}
+pub struct Venue {
+    location: Location,
+    title: String,
+    address: String,
+    foursquare_id: String,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct UserProfilePhoto {}
+pub struct UserProfilePhoto {
+    total_count: i64,
+    photos: Vec<Vec<PhotoSize>>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct File {}
+pub struct File {
+    file_id: String,
+    file_size: Option<i64>,
+    file_path: Option<String>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ReplyKeyboardMarkup {}
+pub struct ReplyKeyboardMarkup {
+    keyboard: Vec<Vec<KeyboardButton>>,
+    #[serde(default)]
+    resize_keyboard: bool,
+    #[serde(default)]
+    one_time_keyboard: bool,
+    #[serde(default)]
+    selective: bool,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct KeyboardButton {}
@@ -189,3 +261,114 @@ pub struct InputMediaVideo {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InputFile {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Game {
+    title: String,
+    description: String,
+    photo: Vec<PhotoSize>,
+    text: Option<String>,
+    text_entities: Option<Vec<MessageEntity>>,
+    animation: Option<Animation>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Animation {
+    file_id: String,
+    thumb: Option<PhotoSize>,
+    file_name: Option<String>,
+    mime_type: Option<String>,
+    file_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Sticker {
+    file_id: String,
+    width: i64,
+    height: i64,
+    thumb: Option<PhotoSize>,
+    emoji: Option<String>,
+    set_name: Option<String>,
+    mask_position: Option<MaskPosition>,
+    file_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct StickerSet {
+    name: String,
+    title: String,
+    #[serde(default)]
+    contains_masks: bool,
+    stickers: Vec<Sticker>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct MaskPosition {
+    point: String,
+    x_shift: f64,
+    y_shift: f64,
+    scale: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LabeledPrice {
+    label: String,
+    amount: i64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Invoice {
+    title: String,
+    description: String,
+    start_parameter: String,
+    currency: String,
+    total_amount: i32,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ShippingAddress {
+    country_code: String,
+    state: String,
+    city: String,
+    street_line1: String,
+    street_line2: String,
+    post_code: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct OrderInfo {
+    name: Option<String>,
+    phone_number: Option<String>,
+    email: Option<String>,
+    shipping_address: Option<ShippingAddress>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ShippingOption {
+    id: String,
+    title: String,
+    prices: Vec<LabeledPrice>,
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SuccessfulPayment {
+    currency: String,
+    total_amount: i64,
+    invoice_payload: String,
+    shipping_option_id: Option<String>,
+    order_info: Option<OrderInfo>,
+    telegram_payment_charge_id: String,
+    provider_payment_charge_id: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PreCheckoutQuery {
+    id: String,
+    from: User,
+    currency: String,
+    total_amount: i64,
+    invoice_payload: String,
+    shipping_option_id: Option<String>,
+    order_info: Option<OrderInfo>,
+}
