@@ -1,0 +1,9 @@
+/target/
+/telegram/target/
+**/*.rs.bk
+
+*.sublime-workspace
+
+telegram/Cargo\.lock
+
+bot.toml
