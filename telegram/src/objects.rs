@@ -1,6 +1,7 @@
 //! JSON ser/deable types for Telegram Bot API Types
 
-use chrono::{DateTime, Utc};
+// TODO: Implement DateTime parsing for date fields
+//use chrono::{DateTime, Utc};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct User {
@@ -106,8 +107,8 @@ pub enum MessageType {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Update {
-    update_id: i64,
-    message: Message,
+    pub update_id: i64,
+    pub message: MessageType,
 }
 
 
@@ -224,43 +225,108 @@ pub struct ReplyKeyboardMarkup {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct KeyboardButton {}
+pub struct KeyboardButton {
+    text: String,
+    #[serde(default)]
+    request_contact: bool,
+    #[serde(default)]
+    request_location: bool,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ReplyKeyboardRemove {}
+pub struct ReplyKeyboardRemove {
+    remove_keyboard: bool,
+    #[serde(default)]
+    selective: bool,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InlineKeyboardMarkup {}
+pub struct InlineKeyboardMarkup {
+    inline_keyboard: Vec<Vec<InlineKeyboardButton>>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InlineKeyboardButton {}
+pub struct InlineKeyboardButton {
+    text: String,
+    url: Option<String>,
+    callback_data: Option<String>,
+    switch_inline_query: Option<String>,
+    switch_inline_query_current_chat: Option<String>,
+    callback_game: Option<CallbackGame>,
+    pay: Option<bool>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct CallbackQuery {}
+pub struct CallbackQuery {
+    id: String,
+    from: User,
+    message: Option<Message>,
+    inline_message_id: Option<String>,
+    chat_instanct: String,
+    data: Option<String>, // TODO: consider using a enum here
+    game_short_name: Option<String>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ForceReply {}
+pub struct ForceReply {
+    force_reply: bool,
+    selective: Option<bool>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ChatPhoto {}
+pub struct ChatPhoto {
+    small_file_id: String,
+    big_file_id: String,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ChatMember {}
+pub struct ChatMember {
+    user: User,
+    status: String, // TODO: Consider using enum
+    until_date: Option<i64>,
+    can_be_edited: Option<bool>,
+    can_change_info: Option<bool>,
+    can_post_messages: Option<bool>,
+    can_edit_messages: Option<bool>,
+    can_delete_messages: Option<bool>,
+    can_invite_users: Option<bool>,
+    can_restrict_members: Option<bool>,
+    can_pin_messages: Option<bool>,
+    can_promote_members: Option<bool>,
+    can_send_messages: Option<bool>,
+    can_send_media_messages: Option<bool>,
+    can_send_other_messages: Option<bool>,
+    can_add_web_page_previews: Option<bool>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ResponseParameters {}
+pub struct ResponseParameters {
+    migrate_to_chat_id: Option<i64>,
+    retry_after: Option<i64>,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InputMedia {}
+pub enum InputMedia {
+    InputMediaPhoto {
+        #[serde(rename = "type")]
+        _type: String, // NOTE: This will always be "photo"
+        media: String, // TODO: Use enum?
+        caption: Option<String>,
+    },
+    InputMediaVideo {
+        #[serde(rename = "type")]
+        _type: String, // NOTE: This will always be "video"
+        media: String, // TODO: Use enum?
+        caption: Option<String>,
+        width: Option<i64>,
+        height: Option<i64>,
+        duration: Option<i64>,
+    },
+}
+
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InputMediaPhoto {}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct InputMediaVideo {}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct InputFile {}
+pub struct InputFile {} // TODO: implement file uploads
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Game {
@@ -271,6 +337,9 @@ pub struct Game {
     text_entities: Option<Vec<MessageEntity>>,
     animation: Option<Animation>,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CallbackGame {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Animation {

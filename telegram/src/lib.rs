@@ -1,6 +1,9 @@
 //! I am a dwarf and I'm making a bot
 //! Telegram Bot, Telegram Bot
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate chrono;
 extern crate serde;
 #[macro_use]
@@ -20,7 +23,7 @@ use uuid::Uuid;
 use tiny_http::{Server, Response};
 
 mod config;
-pub mod types;
+pub mod objects;
 
 pub struct Bot {
     config: config::Config,
@@ -42,35 +45,53 @@ impl Bot {
         Bot { config: config }
     }
 
-    pub fn make_request<T: serde::ser::Serialize + Debug>(
+
+    pub fn make_request(&self, client: &mut reqwest::Client, method: &str) -> () {
+        let addr = format!(
+            "https://api.telegram.org/bot{}/{}",
+            &self.config.auth_token,
+            method
+        );
+        let mut req = client.get(&addr);
+
+        debug!(">>> sending to {:?}\n{:?}\n", addr, req);
+
+        let mut resp = req.send().unwrap();
+
+        debug!("<<< response:\n{:?}\n", resp);
+        self.handle_response(resp);
+    }
+
+    pub fn make_request_json<T: serde::ser::Serialize + Debug>(
         &self,
         client: &mut reqwest::Client,
         method: &str,
-        params: Option<&T>,
+        params: &T,
     ) -> () {
         let addr = format!(
             "https://api.telegram.org/bot{}/{}",
             &self.config.auth_token,
             method
         );
-        let mut req;
-        match params {
-            Some(params) => {
-                req = client.post(&addr);
-                req.form(params);
-            }
-            None => {
-                req = client.get(&addr);
-            }
-        };
-        println!(">> sending to {:?}, {:?}\n", addr, req);
+        let mut req = client.post(&addr);
+        req.json(params);
+
+        debug!(">>> sending to {:?}\n{:?}\n", addr, req);
+
         let mut resp = req.send().unwrap();
-        println!("<< resp: {:?}\n", resp);
-        match resp.text() {
+
+        debug!("<<< response:\n{:?}\n", resp);
+        self.handle_response(resp);
+    }
+
+    pub fn handle_response(&mut self, response: reqwest::Response) -> () {
+        match response.text() {
             Ok(body) => {
                 println!("Body: {:?}\n", body);
             }
-            Err(_) => (),
+            Err(_) => {
+                panic!("Got an empty response: {:?}", response);
+            }
         };
     }
 
@@ -83,26 +104,40 @@ impl Bot {
 
         // register the webhook
         {
-            self.make_request::<&()>(&mut client, "deleteWebhook", None);
-            self.make_request(
+            self.make_request(&mut client, "deleteWebhook");
+            self.make_request_json(
                 &mut client,
                 "setWebhook",
-                Some(&[("url", &self.config.webhook.external_address)]),
+                &[("url", &self.config.webhook.external_address)],
             );
         }
 
         loop {
             // get updates
             for mut request in webhook_server.incoming_requests() {
-                println!(
-                    "received request! method: {:?}, url: {:?}, headers: {:?}",
-                    request.method(),
-                    request.url(),
-                    request.headers()
-                );
-                let update: types::Update = serde_json::from_reader(request.as_reader()).unwrap();
+                // TODO: check token so we know it is form Telegram
 
-                println!(">> Got Update: \n{:?}", update);
+                let update: objects::Update = serde_json::from_reader(request.as_reader()).unwrap();
+                debug!("!!! got Update: \n{:?}\n", update);
+
+                // TODO: handle responses here
+
+                match update.message {
+                    objects::MessageType::Message(message) => {
+                        if let Some(ref cmd) = message.text {
+                            match cmd {
+                                "/start" => {
+                                    // send a greeting or something
+                                }
+                                "/stop" => {
+                                    // stop the bot for now
+                                }
+                                _ => (),
+                            }
+                        }
+                    }
+                    _ => (),
+                }
 
                 let response = Response::from_string("").with_status_code(200);
                 request.respond(response).unwrap();
@@ -113,6 +148,6 @@ impl Bot {
         }
 
         // unregister the webhook
-        self.make_request::<&()>(&mut client, "deleteWebhook", None);
+        self.make_request(&mut client, "deleteWebhook");
     }
 }
