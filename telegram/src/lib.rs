@@ -3,11 +3,11 @@
 
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 extern crate chrono;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 extern crate toml;
 extern crate reqwest;
@@ -78,16 +78,16 @@ impl Bot {
 
         debug!(">>> sending to {:?}\n{:?}\n", addr, req);
 
-        let mut resp = req.send().unwrap();
+        let resp = req.send().unwrap();
 
         debug!("<<< response:\n{:?}\n", resp);
         self.handle_response(resp);
     }
 
-    pub fn handle_response(&mut self, response: reqwest::Response) -> () {
+    pub fn handle_response(&self, mut response: reqwest::Response) -> () {
         match response.text() {
             Ok(body) => {
-                println!("Body: {:?}\n", body);
+                debug!("Body: {:?}\n", body);
             }
             Err(_) => {
                 panic!("Got an empty response: {:?}", response);
@@ -108,29 +108,40 @@ impl Bot {
             self.make_request_json(
                 &mut client,
                 "setWebhook",
-                &[("url", &self.config.webhook.external_address)],
+                &json!({
+                    "url": &self.config.webhook.external_address
+                }),
             );
         }
 
-        loop {
+        'main: loop {
             // get updates
             for mut request in webhook_server.incoming_requests() {
                 // TODO: check token so we know it is form Telegram
 
-                let update: objects::Update = serde_json::from_reader(request.as_reader()).unwrap();
-                debug!("!!! got Update: \n{:?}\n", update);
+                let mut body = String::new();
+                request.as_reader().read_to_string(&mut body).unwrap();
+
+                debug!("<<< got update:\n{:}\n", body);
+
+                let update: objects::Update = match serde_json::from_str(&body) {
+                    Ok(update) => update,
+                    Err(err) => panic!("!!! Failed to parse:\n{:?}\n{:}\n", request, err),
+                };
+                debug!("### got Update: \n{:?}\n", update);
 
                 // TODO: handle responses here
 
                 match update.message {
                     objects::MessageType::Message(message) => {
                         if let Some(ref cmd) = message.text {
-                            match cmd {
+                            match cmd as &str {
                                 "/start" => {
                                     // send a greeting or something
                                 }
                                 "/stop" => {
                                     // stop the bot for now
+                                    break 'main;
                                 }
                                 _ => (),
                             }

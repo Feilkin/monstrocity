@@ -111,7 +111,6 @@ pub struct Update {
     pub message: MessageType,
 }
 
-
 // TODO: Why do I do this to myself
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MessageEntity {
@@ -306,16 +305,15 @@ pub struct ResponseParameters {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(tag = "type")]
 pub enum InputMedia {
+    #[serde(rename = "photo")]
     InputMediaPhoto {
-        #[serde(rename = "type")]
-        _type: String, // NOTE: This will always be "photo"
         media: String, // TODO: Use enum?
         caption: Option<String>,
     },
+    #[serde(rename = "video")]
     InputMediaVideo {
-        #[serde(rename = "type")]
-        _type: String, // NOTE: This will always be "video"
         media: String, // TODO: Use enum?
         caption: Option<String>,
         width: Option<i64>,
