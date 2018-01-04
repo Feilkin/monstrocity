@@ -24,9 +24,13 @@ use tiny_http::{Server, Response};
 
 mod config;
 pub mod objects;
+pub mod command;
+
+use command::Command;
 
 pub struct Bot {
     config: config::Config,
+    client: reqwest::Client,
 }
 
 impl Bot {
@@ -42,17 +46,23 @@ impl Bot {
 
         println!("Config: {:?}", &config);
 
-        Bot { config: config }
+        // for sending stuff
+        let client = reqwest::Client::new();
+
+        Bot {
+            config: config,
+            client: client,
+        }
     }
 
 
-    pub fn make_request(&self, client: &mut reqwest::Client, method: &str) -> () {
+    pub fn make_request(&self, method: &str) -> () {
         let addr = format!(
             "https://api.telegram.org/bot{}/{}",
             &self.config.auth_token,
             method
         );
-        let mut req = client.get(&addr);
+        let mut req = self.client.get(&addr);
 
         debug!(">>> sending to {:?}\n{:?}\n", addr, req);
 
@@ -64,7 +74,6 @@ impl Bot {
 
     pub fn make_request_json<T: serde::ser::Serialize + Debug>(
         &self,
-        client: &mut reqwest::Client,
         method: &str,
         params: &T,
     ) -> () {
@@ -73,10 +82,15 @@ impl Bot {
             &self.config.auth_token,
             method
         );
-        let mut req = client.post(&addr);
+        let mut req = self.client.post(&addr);
         req.json(params);
 
-        debug!(">>> sending to {:?}\n{:?}\n", addr, req);
+        debug!(
+            ">>> sending to {:?}\n{:?}\n{:?}\n",
+            addr,
+            req,
+            serde_json::to_string(params).unwrap()
+        );
 
         let resp = req.send().unwrap();
 
@@ -95,18 +109,15 @@ impl Bot {
         };
     }
 
-    pub fn run(self) {
-        // for sending stuff
-        let mut client = reqwest::Client::new();
+    pub fn run(mut self) {
 
         // setup the webhook
         let webhook_server = Server::http(&self.config.webhook.bind_address).unwrap();
 
         // register the webhook
         {
-            self.make_request(&mut client, "deleteWebhook");
+            self.make_request("deleteWebhook");
             self.make_request_json(
-                &mut client,
                 "setWebhook",
                 &json!({
                     "url": &self.config.webhook.external_address
@@ -114,9 +125,10 @@ impl Bot {
             );
         }
 
+        let mut quit = false;
         'main: loop {
             // get updates
-            for mut request in webhook_server.incoming_requests() {
+            while let Ok(Some(mut request)) = webhook_server.try_recv() {
                 // TODO: check token so we know it is form Telegram
 
                 let mut body = String::new();
@@ -124,7 +136,7 @@ impl Bot {
 
                 debug!("<<< got update:\n{:}\n", body);
 
-                let update: objects::Update = match serde_json::from_str(&body) {
+                let update: objects::UpdateKind = match serde_json::from_str(&body) {
                     Ok(update) => update,
                     Err(err) => panic!("!!! Failed to parse:\n{:?}\n{:}\n", request, err),
                 };
@@ -132,16 +144,23 @@ impl Bot {
 
                 // TODO: handle responses here
 
-                match update.message {
-                    objects::MessageType::Message(message) => {
+                match update {
+                    objects::UpdateKind::Message { message, .. } => {
                         if let Some(ref cmd) = message.text {
                             match cmd as &str {
                                 "/start" => {
                                     // send a greeting or something
+                                    let reply = message.reply(
+                                        "Please do not use this bot.\n_Thanks._"
+                                            .to_owned(),
+                                    );
+                                    reply.execute(&self);
                                 }
                                 "/stop" => {
                                     // stop the bot for now
-                                    break 'main;
+                                    let reply = message.reply("I don't blame you.".to_owned());
+                                    reply.execute(&self);
+                                    quit = true;
                                 }
                                 _ => (),
                             }
@@ -154,11 +173,15 @@ impl Bot {
                 request.respond(response).unwrap();
             }
 
+            if quit == true {
+                break;
+            }
+
             // update world
             // send stuff
         }
 
         // unregister the webhook
-        self.make_request(&mut client, "deleteWebhook");
+        self.make_request("deleteWebhook");
     }
 }

@@ -1,5 +1,8 @@
 //! JSON ser/deable types for Telegram Bot API Types
 
+use super::Bot;
+use command;
+
 // TODO: Implement DateTime parsing for date fields
 //use chrono::{DateTime, Utc};
 
@@ -83,33 +86,98 @@ pub struct Message {
     pub successful_payment: Option<SuccessfulPayment>,
 }
 
+// Nice.
 #[derive(Debug, Deserialize, Serialize)]
-pub enum MessageType {
-    #[serde(rename = "message")]
-    Message(Message),
-    #[serde(rename = "edited_message")]
-    EditedMessage(Message),
-    #[serde(rename = "channel_post")]
-    ChannelPost(Message),
-    #[serde(rename = "edited_channel_post")]
-    EditedChannelPost {},
-    #[serde(rename = "inline_query")]
-    InlineQuery {},
-    #[serde(rename = "chosen_inline_result")]
-    ChosenInlineQuery {},
-    #[serde(rename = "callback_query")]
-    CallbackQuery {},
-    #[serde(rename = "shipping_query")]
-    ShippingQuery {},
-    #[serde(rename = "pre_checkout_query")]
-    PreCheckoutQuery {},
+#[serde(untagged)]
+pub enum ReplyMarkup {
+    InlineKeyboardMarkup(InlineKeyboardMarkup),
+    ReplyKeyboardMarkup(ReplyKeyboardMarkup),
+    ReplyKeyboardRemove(ReplyKeyboardRemove),
+    ForceReply(ForceReply),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Update {
-    pub update_id: i64,
-    pub message: MessageType,
+pub struct MessageCommand {
+    chat_id: i64,
+    text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    parse_mode: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    disable_web_page_preview: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    disable_notification: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reply_to_message_id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reply_markup: Option<ReplyMarkup>,
 }
+
+impl command::Command for MessageCommand {
+    fn execute(&self, bot: &Bot) -> () {
+        bot.make_request_json("sendMessage", self);
+    }
+}
+
+impl Message {
+    pub fn reply(&self, text: String) -> MessageCommand {
+        MessageCommand {
+            chat_id: self.chat.id,
+            text: text,
+            parse_mode: Some("Markdown".to_owned()),
+            disable_web_page_preview: None,
+            disable_notification: None,
+            reply_to_message_id: Some(self.message_id),
+            reply_markup: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum UpdateKind {
+    Message { update_id: i64, message: Message },
+    EditedMessage {
+        update_id: i64,
+        edited_message: Message,
+    },
+    ChannelPost {
+        update_id: i64,
+        channel_post: Message,
+    },
+    EditedChannelPost {
+        update_id: i64,
+        edited_channel_post: Message,
+    },
+    InlineQuery {
+        update_id: i64,
+        inline_query: InlineQuery,
+    },
+    ChosenInlineQuery {
+        update_id: i64,
+        chosen_inline_result: ChosenInlineQuery,
+    },
+    CallbackQuery {
+        update_id: i64,
+        callback_query: CallbackQuery,
+    },
+    ShippingQuery {
+        update_id: i64,
+        shipping_query: ShippingQuery,
+    },
+    PreCheckoutQuery {
+        update_id: i64,
+        pre_checkout_query: PreCheckoutQuery,
+    },
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InlineQuery {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ChosenInlineQuery {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ShippingQuery {}
 
 // TODO: Why do I do this to myself
 #[derive(Debug, Deserialize, Serialize)]
