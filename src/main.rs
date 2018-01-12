@@ -4,14 +4,11 @@ extern crate telegram;
 
 use std::env;
 
-use telegram::{Bot, BotBuilder};
-
-fn display_help(msg: telegram::objects::Message) -> () {
-    msg.reply("Please, go away");
-}
+use telegram::bot::Bot;
+use telegram::dispatcher::ASyncDispatcher;
 
 fn main() {
-    env_logger::init();
+    env_logger::init().unwrap();
     println!("Hello, world!");
 
     let config_file = match env::var("BOT_CONFIG_FILE") {
@@ -20,14 +17,7 @@ fn main() {
     };
     // sketching out what I want the bot to look like
 
-    let bot = Bot::new(&config);
-
-    let sender = bot.get_sender();
-    let start_sender = sender.clone();
-    bot.register_command("start", move |msg| {
-        let reply = msg.reply("Hello, this is dog.");
-        start_sender.send(reply).unwrap();
-    })
+    let bot = <Bot>::new(&config_file);
 
     bot.run();
 }

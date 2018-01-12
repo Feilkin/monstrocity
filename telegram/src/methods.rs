@@ -3,20 +3,18 @@
 use std::fmt::Debug;
 
 use serde::{Serialize, Deserialize};
+use serde_json::value::Value;
 use bot::Bot;
 use dispatcher::Dispatcher;
 use objects::ReplyMarkup;
 
-pub struct Method<P: Serialize> {
+pub struct Method {
     pub method: String,
-    pub params: P,
+    pub params: Value,
 }
 
-impl<P: Serialize> Method<P> {
-    pub fn execute<D: Dispatcher>(&self, bot: &Bot<D>) -> ()
-    where
-        P: Debug,
-    {
+impl Method {
+    pub fn execute<D: Dispatcher>(&self, bot: &Bot<D>) -> () {
         bot.make_request_json(&self.method, &self.params);
     }
 }

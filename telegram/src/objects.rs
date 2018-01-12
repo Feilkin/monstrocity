@@ -98,18 +98,15 @@ pub enum ReplyMarkup {
 }
 
 impl Message {
-    pub fn reply(&self, text: String) -> Method<methods::SendMessage> {
+    pub fn reply(&self, text: String) -> Method {
         Method {
             method: "sendMessage".to_owned(),
-            params: methods::SendMessage {
-                chat_id: self.chat.id,
-                text: text,
-                parse_mode: Some("Markdown".to_owned()),
-                disable_web_page_preview: None,
-                disable_notification: None,
-                reply_to_message_id: Some(self.message_id),
-                reply_markup: None,
-            },
+            params: json!({
+                "chat_id": self.chat.id,
+                "text": text,
+                "parse_mode": "Markdown".to_owned(),
+                "reply_to_message_id": self.message_id,
+            }),
         }
     }
 }

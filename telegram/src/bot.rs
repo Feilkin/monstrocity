@@ -12,15 +12,14 @@ use toml;
 use reqwest;
 
 use config;
-use dispatcher::{Dispatcher, SimpleDispatcher};
+use dispatcher::{Dispatcher, ASyncDispatcher};
 use methods::Method;
 use objects;
 
-pub struct Bot<D: Dispatcher> {
+pub struct Bot<D: Dispatcher = ASyncDispatcher> {
     config: config::Config,
     client: reqwest::Client,
     dispatcher: D,
-    channel: (mpsc::Sender<Arc<Method>>, mpsc::Receiver<Arc<Method>>),
 }
 
 impl<D: Dispatcher> Bot<D> {
@@ -36,10 +35,9 @@ impl<D: Dispatcher> Bot<D> {
         let client = reqwest::Client::new();
 
         Bot {
+            dispatcher: D::new(&config),
             config: config,
-            dispatcher: D::new(),
             client: client,
-            channel: mpsc::channel(),
         }
     }
 
@@ -96,11 +94,6 @@ impl<D: Dispatcher> Bot<D> {
         };
     }
 
-    pub fn get_sender(&self) -> mpsc::Sender {
-        let (ref sender, _) = self.channel;
-        return *sender.clone();
-    }
-
     pub fn run(mut self) {
 
         // setup the webhook
@@ -134,32 +127,13 @@ impl<D: Dispatcher> Bot<D> {
                 };
                 debug!("### got Update: \n{:?}\n", update);
 
-                // TODO: handle responses here
+                // TODO: Handle responses here
 
-                match update {
-                    objects::UpdateKind::Message { message, .. } => {
-                        if let Some(ref cmd) = message.text {
-                            match cmd as &str {
-                                "/start" => {
-                                    // send a greeting or something
-                                    let reply = message.reply(
-                                        "Please do not use this bot.\n_Thanks._"
-                                            .to_owned(),
-                                    );
-                                    reply.execute(&self);
-                                }
-                                "/stop" => {
-                                    // stop the bot for now
-                                    let reply = message.reply("I don't blame you.".to_owned());
-                                    reply.execute(&self);
-                                    quit = true;
-                                }
-                                _ => (),
-                            }
-                        }
-                    }
-                    _ => (),
-                }
+                self.dispatcher.dispatch_update(update);
+
+                // TODO: Figure out how to respond to the updates.
+                //       For now, we just send 200 so Telegram knows we were able to receive the
+                //       update properly.
 
                 let response = Response::from_string("").with_status_code(200);
                 request.respond(response).unwrap();
@@ -189,7 +163,7 @@ enum WebhookEnum {
 }
 
 /// Builder for Bot, I'm not sure if this is the best way to do it.
-pub struct BotBuilder<D: Dispatcher = SimpleDispatcher> {
+pub struct BotBuilder<D: Dispatcher = ASyncDispatcher> {
     config: config::Config,
     dispatcher: Option<D>,
     webhook: WebhookEnum,
