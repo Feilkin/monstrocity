@@ -3,6 +3,16 @@ name = "monstrocity"
 version = "0.1.0"
 authors = ["Aatu Hieta <aatu@hieta.fi>"]
 
+[[bin]]
+name = "bot-worker"
+path = "src/main.rs"
+
+[[bin]]
+name = "webhook"
+path = "webhook/src/main.rs"
+
+[workspace]
+
 [dependencies]
 env_logger = "0.4"
 telegram = { path = "telegram" }

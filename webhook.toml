@@ -1,0 +1,2 @@
+bind_address = "0.0.0.0:8443"
+redis_address = "redis://10.8.0.1/"

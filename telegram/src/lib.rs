@@ -2,6 +2,8 @@
 //! Telegram Bot, Telegram Bot
 
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
 extern crate chrono;
 extern crate serde;
@@ -13,9 +15,11 @@ extern crate toml;
 extern crate reqwest;
 extern crate uuid;
 extern crate tiny_http;
+extern crate regex;
 
 mod config; // I don't think this needs to be public?
-pub mod dispatcher;
-pub mod objects;
-pub mod methods;
-pub mod bot;
+//pub mod dialog;
+//pub mod dispatcher;
+//pub mod objects;
+//pub mod methods;
+//pub mod bot;
