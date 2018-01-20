@@ -1,7 +1,5 @@
 //! JSON ser/deable types for Telegram Bot API Types
 
-use bot::Bot;
-use methods;
 use methods::Method;
 
 // TODO: Implement DateTime parsing for date fields

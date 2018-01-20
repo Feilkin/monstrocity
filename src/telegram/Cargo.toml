@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Aatu Hieta <aatu@hieta.fi>"]
 
 [dependencies]
+ctrlc = { version = "3.0", features = ["termination"] }
+env_logger = "*"
 lazy_static = "1.0"
 log = "0.4"
 serde = "1.0"
