@@ -1,6 +1,6 @@
 //! JSON ser/deable types for Telegram Bot API Types
 
-use methods::Method;
+use methods::{Method, SendMessage};
 
 // TODO: Implement DateTime parsing for date fields
 //use chrono::{DateTime, Utc};
@@ -96,15 +96,18 @@ pub enum ReplyMarkup {
 }
 
 impl Message {
-    pub fn reply(&self, text: String) -> Method {
+    pub fn reply(&self, text: String) -> Method<SendMessage> {
         Method {
             method: "sendMessage".to_owned(),
-            params: json!({
-                "chat_id": self.chat.id,
-                "text": text,
-                "parse_mode": "Markdown".to_owned(),
-                "reply_to_message_id": self.message_id,
-            }),
+            params: SendMessage {
+                chat_id: self.chat.id,
+                text: text,
+                parse_mode: Some("Markdown".to_owned()),
+                reply_to_message_id: Some(self.message_id),
+                disable_web_page_preview: None,
+                disable_notification: None,
+                reply_markup: None,
+            },
         }
     }
 }

@@ -7,6 +7,7 @@ extern crate lazy_static;
 extern crate log;
 extern crate ctrlc;
 extern crate chrono;
+extern crate redis;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -19,7 +20,7 @@ extern crate tiny_http;
 extern crate regex;
 
 mod config; // I don't think this needs to be public?
-//pub mod dialog;
+pub mod dialog;
 //pub mod dispatcher;
 pub mod objects;
 pub mod methods;

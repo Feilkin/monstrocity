@@ -3,5 +3,6 @@
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub auth_token: String,
-    pub workers: u32,
+    pub workers: usize,
+    pub redis_address: String,
 }

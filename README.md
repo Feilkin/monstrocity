@@ -40,3 +40,6 @@ I did some work before I started to stream, and this idea has been in my mind fo
 *I have to start counting somewhere, don't I?*
 
 Got the basic Webhook done, going to install it to the server later. I don't think I'll have to touch it in a while, as it is fairly simple.
+
+Worker threads are spawned, but they don't actually do anything. Need to figure out the API for the bot.
+

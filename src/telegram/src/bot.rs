@@ -18,7 +18,7 @@ use worker::Worker;
 
 pub struct Bot {
     name: String,
-    config: Config, // Auth token, worker count, etc
+    config: Arc<Config>, // Auth token, worker count, etc
     workers: Vec<Worker>,
 }
 
@@ -33,6 +33,10 @@ impl Bot {
 
         // Spawn Workers
         println!("Spawning {} workers", self.config.workers);
+
+        for i in 1..self.config.workers {
+            self.workers.push(Worker::new(i, Arc::clone(&self.config)));
+        }
 
         // wait until we receive a SIGINT
 
@@ -99,7 +103,7 @@ impl BotBuilder {
 
         Bot {
             name: self.name,
-            config: conf,
+            config: Arc::new(conf),
             workers: Vec::new(),
         }
     }
