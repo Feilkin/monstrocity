@@ -43,3 +43,6 @@ Got the basic Webhook done, going to install it to the server later. I don't thi
 
 Worker threads are spawned, but they don't actually do anything. Need to figure out the API for the bot.
 
+### Day 2
+
+Made Dialogs shareable between threads, and implemented some basic functionality in the Workers. We can now parse commands form the messages, and get Dialog objects from the Bot.

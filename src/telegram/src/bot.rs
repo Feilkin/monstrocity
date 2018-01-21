@@ -14,12 +14,14 @@ use uuid::Uuid;
 use toml;
 
 use config::Config;
+use dialog::Dialog;
 use worker::Worker;
 
 pub struct Bot {
     name: String,
     config: Arc<Config>, // Auth token, worker count, etc
     workers: Vec<Worker>,
+    dialogs: Arc<HashMap<String, Dialog>>,
 }
 
 impl Bot {
@@ -35,7 +37,11 @@ impl Bot {
         println!("Spawning {} workers", self.config.workers);
 
         for i in 1..self.config.workers {
-            self.workers.push(Worker::new(i, Arc::clone(&self.config)));
+            self.workers.push(Worker::new(
+                i,
+                Arc::clone(&self.config),
+                Arc::clone(&self.dialogs),
+            ));
         }
 
         // wait until we receive a SIGINT
@@ -64,6 +70,7 @@ enum BotConfig {
 pub struct BotBuilder {
     name: String,
     config: BotConfig,
+    dialogs: HashMap<String, Dialog>,
 }
 
 impl BotBuilder {
@@ -71,7 +78,13 @@ impl BotBuilder {
         BotBuilder {
             name: name,
             config: BotConfig::None,
+            dialogs: HashMap::new(),
         }
+    }
+
+    pub fn register_dialog(mut self, name: String, dialog: Dialog) -> BotBuilder {
+        self.dialogs.insert(name, dialog);
+        self
     }
 
     // Move self, because one builder should only build one bot?
@@ -105,6 +118,7 @@ impl BotBuilder {
             name: self.name,
             config: Arc::new(conf),
             workers: Vec::new(),
+            dialogs: Arc::new(self.dialogs),
         }
     }
 }
