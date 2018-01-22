@@ -19,12 +19,12 @@ fn main() {
         .with_config_file("bot.toml")
         .register_dialog(
             "start".to_owned(),
-            Dialog::new("start_dialog".to_owned(), "greeting".to_owned())
+            Dialog::new("start".to_owned(), "greeting".to_owned())
                 .add_card(
                     Card::new("greeting".to_owned())
                         .build_text(|msg| {
                             format!(
-                                "Hi, {}!\nWhat is your favorite animal?",
+                                "Hi, {}!\nWhat is your favorite animal?\n\n_Hint: try _`dog`_._",
                                 msg.from.as_ref().unwrap().username.as_ref().unwrap()
                             )
                         })

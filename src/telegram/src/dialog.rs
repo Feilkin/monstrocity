@@ -35,6 +35,10 @@ impl Dialog {
     pub fn get_root(&self) -> Arc<Card> {
         Arc::clone(self.cards.get(&self.root).unwrap())
     }
+
+    pub fn get_card(&self, id: &str) -> Arc<Card> {
+        Arc::clone(self.cards.get(id).unwrap())
+    }
 }
 
 enum CardText {
@@ -44,10 +48,10 @@ enum CardText {
 }
 
 pub struct Card {
-    id: String,
+    pub id: String,
     text: CardText,
-    wants_reply: Option<Box<Fn(&Message) -> Result<Reply, Reply> + Sync + Send>>,
-    ends_dialog: bool,
+    reply_callback: Option<Box<Fn(&Message) -> Result<Reply, Reply> + Sync + Send>>,
+    pub ends_dialog: bool,
 }
 
 impl Card {
@@ -55,7 +59,7 @@ impl Card {
         Card {
             id: id,
             text: CardText::None,
-            wants_reply: None,
+            reply_callback: None,
             ends_dialog: false,
         }
     }
@@ -69,7 +73,7 @@ impl Card {
         mut self,
         f: F,
     ) -> Card {
-        self.wants_reply = Some(Box::new(f));
+        self.reply_callback = Some(Box::new(f));
         self
     }
 
@@ -88,6 +92,13 @@ impl Card {
             CardText::Raw(ref text) => text.to_owned(),
             CardText::Builder(ref builder) => builder(msg),
             CardText::None => "<None>".to_owned(),
+        }
+    }
+
+    pub fn check_reply(&self, msg: &Message) -> Option<Result<Reply, Reply>> {
+        match self.reply_callback {
+            Some(ref cb) => Some(cb(msg)),
+            None => None,
         }
     }
 }

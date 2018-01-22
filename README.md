@@ -46,3 +46,7 @@ Worker threads are spawned, but they don't actually do anything. Need to figure 
 ### Day 2
 
 Made Dialogs shareable between threads, and implemented some basic functionality in the Workers. We can now parse commands form the messages, and get Dialog objects from the Bot.
+
+### Day 3
+
+(Off-stream) Made Dialogs work, but the code needs to be cleaned up.
