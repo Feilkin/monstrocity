@@ -3,8 +3,9 @@
 use std::fmt::Debug;
 
 use serde::{Serialize, Deserialize};
-use objects::ReplyMarkup;
+use objects::{ReplyMarkup, InlineKeyboardMarkup};
 
+#[derive(Debug)]
 pub struct Method<T: Serialize> {
     pub method: String,
     pub params: T,
@@ -24,4 +25,11 @@ pub struct SendMessage {
     pub reply_to_message_id: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reply_markup: Option<ReplyMarkup>,
+}
+
+impl Method<SendMessage> {
+    pub fn with_keyboard(mut self, keyboard: InlineKeyboardMarkup) -> Method<SendMessage> {
+        self.params.reply_markup = Some(ReplyMarkup::InlineKeyboardMarkup(keyboard));
+        self
+    }
 }

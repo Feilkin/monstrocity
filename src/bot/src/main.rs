@@ -3,14 +3,7 @@
 extern crate telegram;
 
 use telegram::bot::{Bot, BotBuilder};
-use telegram::dialog::{Dialog, Card, Reply};
-
-fn is_animal(name: &str) -> bool {
-    match name {
-        "dog" | "cat" | "horse" => true,
-        _ => false,
-    }
-}
+use telegram::dialog::{Dialog, Card, Reply, Keyboard, Button, KeyboardReply};
 
 fn main() {
     println!("Hello, world!");
@@ -28,17 +21,13 @@ fn main() {
                                 msg.from.as_ref().unwrap().username.as_ref().unwrap()
                             )
                         })
-                        .wants_reply(|msg| if let Some(ref text) = msg.text {
-                            if is_animal(text) {
-                                Ok(Reply::ShowCard("reply_card".to_owned()))
-                            } else {
-                                Err(Reply::Text("That is not an animal.".to_owned()))
-                            }
-                        } else {
-                            Err(Reply::Text(
-                                "Please type the species your favorite animal".to_owned(),
-                            ))
-                        }),
+                        .with_keyboard(
+                            Keyboard::new("fav_animal".to_owned(), |query| {
+                                KeyboardReply::HideKeyboardAndShowCard("reply_card".to_owned())
+                            }).add_row(&[Button::new("Dog".to_owned()).with_callback_data("dog".to_owned())])
+                                .add_row(&[Button::new("Cat".to_owned()).with_callback_data("cat".to_owned())])
+                                .add_row(&[Button::new("Ziltoid".to_owned()).with_callback_data("puppet".to_owned())]),
+                        ),
                 )
                 .add_card(
                     Card::new("reply_card".to_owned())

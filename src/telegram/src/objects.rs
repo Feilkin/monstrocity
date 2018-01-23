@@ -292,14 +292,22 @@ pub struct InlineKeyboardMarkup {
     pub inline_keyboard: Vec<Vec<InlineKeyboardButton>>,
 }
 
+
+// TODO: Use a enum here, since we can only send one of the optionals
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InlineKeyboardButton {
     pub text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub callback_data: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub switch_inline_query: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub switch_inline_query_current_chat: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub callback_game: Option<CallbackGame>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pay: Option<bool>,
 }
 
@@ -309,7 +317,7 @@ pub struct CallbackQuery {
     pub from: User,
     pub message: Option<Message>,
     pub inline_message_id: Option<String>,
-    pub chat_instanct: String,
+    pub chat_instanct: Option<String>,
     pub data: Option<String>, // TODO: consider using a enum here
     pub game_short_name: Option<String>,
 }
