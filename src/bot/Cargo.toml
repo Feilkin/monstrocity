@@ -5,3 +5,5 @@ authors = ["Aatu Hieta <aatu@hieta.fi>"]
 
 [dependencies]
 telegram = { path = "../telegram/" }
+lazy_static = "1.0"
+fluent = { git = "https://github.com/projectfluent/fluent-rs.git" }

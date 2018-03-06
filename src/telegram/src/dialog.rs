@@ -19,11 +19,11 @@ pub struct Dialog {
 }
 
 impl Dialog {
-    pub fn new(id: String, root: String) -> Dialog {
+    pub fn new(id: &str, root: &str) -> Dialog {
         Dialog {
-            id: id,
+            id: id.to_owned(),
             cards: HashMap::new(),
-            root: root,
+            root: root.to_owned(),
         }
     }
 
@@ -196,15 +196,15 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new(label: String) -> Button {
+    pub fn new(label: &str) -> Button {
         Button {
-            label: label,
+            label: label.to_owned(),
             data: ButtonData::None,
         }
     }
 
-    pub fn with_callback_data(mut self, data: String) -> Button {
-        self.data = ButtonData::CallbackData(data);
+    pub fn with_callback_data(mut self, data: &str) -> Button {
+        self.data = ButtonData::CallbackData(data.to_owned());
         self
     }
 }
